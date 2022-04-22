@@ -1,5 +1,4 @@
-package com.pdist.schedule;
-
+import com.pdist.schedule.RpcServer;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Channel;
 
