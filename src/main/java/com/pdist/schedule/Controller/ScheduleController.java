@@ -1,5 +1,6 @@
 package com.pdist.schedule.Controller;
 
+import com.pdist.schedule.DTO.ScheduleRequest;
 import com.pdist.schedule.Model.Schedule;
 import com.pdist.schedule.Service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +26,8 @@ public class ScheduleController {
     }
 
     @PostMapping("/schedule")
-    public Schedule create(@RequestBody Schedule schedule){
-        return this.scheduleService.create(schedule);
+    public Schedule create(@RequestBody ScheduleRequest scheduleRequest){
+        return this.scheduleService.create(scheduleRequest);
     }
 
     @PutMapping("/schedule/{id}")

@@ -1,10 +1,12 @@
 package com.pdist.schedule.Service;
 
 import com.pdist.schedule.ClientRPC;
+import com.pdist.schedule.DTO.ScheduleRequest;
 import com.pdist.schedule.Model.Message;
 import com.pdist.schedule.Model.Schedule;
 import com.pdist.schedule.Model.Usuario;
 import com.pdist.schedule.Repository.ScheduleRepository;
+import com.pdist.schedule.Repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ public class ScheduleService {
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public List<Schedule> read() {
         return this.scheduleRepository.findAll();
@@ -28,19 +32,27 @@ public class ScheduleService {
     }
 
     @Transactional
-    public Schedule create(Schedule schedule){
+    public Schedule create(ScheduleRequest scheduleRequest){
+        Schedule schedule = scheduleRequest.toSchedule(usuarioRepository);
         Schedule newSchedule = this.scheduleRepository.save(schedule);
-        for(Usuario student : schedule.getStudents())
-            sendMessage(newSchedule, student, "Novo Horário Cadastrado");
-
         return newSchedule;
     }
 
     @Transactional
     public Schedule update(Schedule schedule){
+        Schedule oldSchedule = this.scheduleRepository.getById(schedule.getId());
         Schedule newSchedule = this.scheduleRepository.save(schedule);
-        for(Usuario student : schedule.getStudents())
-            sendMessage(newSchedule, student, "Horário Atualizado");
+        for(Usuario student : schedule.getStudents()) {
+            if(oldSchedule.getStudents().contains(student))
+                sendMessage(newSchedule, student, "Horário Atualizado");
+            else
+                sendMessage(newSchedule, student, "Novo Horário Cadastrado");
+        }
+
+        for(Usuario studentOld : oldSchedule.getStudents()) {
+            if(!newSchedule.getStudents().contains(studentOld))
+                sendMessage(newSchedule, studentOld, "Horário Removido");
+        }
 
         return newSchedule;
     }
@@ -54,7 +66,7 @@ public class ScheduleService {
         message.setUserIdOrigin(schedule.getTeacher());
         message.setUserIdDestination(student);
         message.setDateTime(new Timestamp(System.currentTimeMillis()));
-        message.setDescription("Gostariamos de notificar que você possui uma aula em " +
+        message.setDescription("Gostariamos de notificar que sobre a aula em " +
                 dateFormat.format(schedule.getDateTimeBegin()));
         ClientRPC.sendMessage(message);
     }
